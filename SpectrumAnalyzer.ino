@@ -42,31 +42,27 @@ void loop()
     level[1] =  fft1024.read(1);
     level[2] =  fft1024.read(2, 3);
     level[3] =  fft1024.read(4, 5);
-    level[4] =  fft1024.read(6, 9);
-    level[5] =  fft1024.read(10, 13);
-    level[6] =  fft1024.read(14, 18);
-    level[7] =  fft1024.read(19, 26);
-    level[8] =  fft1024.read(27, 35);
-    level[9] =  fft1024.read(36, 49);
-    level[10] = fft1024.read(50, 66);
-    level[11] = fft1024.read(67, 89);
-    level[12] = fft1024.read(90, 120);
-    level[13] = fft1024.read(121, 160);
-    level[14] = fft1024.read(161, 215);
-    level[15] = fft1024.read(216, 287);
-    level[16] = fft1024.read(288, 383);
-    level[17] = fft1024.read(384, 511);
+    level[4] =  fft1024.read(6, 7);
+    level[5] =  fft1024.read(8, 11);
+    level[6] =  fft1024.read(12, 15);
+    level[7] =  fft1024.read(16, 20);
+    level[8] =  fft1024.read(21, 27);
+    level[9] =  fft1024.read(28, 35);
+    level[10] = fft1024.read(36, 45);
+    level[11] = fft1024.read(46, 59);
+    level[12] = fft1024.read(60, 75);
+    level[13] = fft1024.read(76, 97);
+    level[14] = fft1024.read(98, 124);
+    level[15] = fft1024.read(125, 158);
+    level[16] = fft1024.read(159, 201);
+    level[17] = fft1024.read(202, 255);
 
     for (int i=0; i<18; i++)
     {
-      Serial.print(level[i]*scale);
-      Serial.print(" ");
 
-      /*
-      // TODO: conversion from FFT data to display bars should be
-      // exponentially scaled.  But how keep it a simple example?
+      // TODO: conversion from FFT data to display bars should be exponentially scaled.  But how keep it a simple example?
       int val = level[i] * scale;
-      if (val > 8) val = 8;
+      if (val > 16) val = 16;
 
       if (val >= shown[i])
       {
@@ -78,9 +74,9 @@ void loop()
         {
         	shown[i] = shown[i] - 1;
         }
-        val = shown[i];
       }
-	  */
+      Serial.print(shown[i]);
+      Serial.print(" ");
     }
 
     Serial.print(" CPU:");
