@@ -23,9 +23,9 @@ AudioInputAnalog         adc1(A3);
 AudioAnalyzeFFT1024      fft1024;
 AudioConnection          patchCord1(adc1, fft1024);
 
-float scale = 60.0;		// The scale sets how much sound is needed in each frequency range to show all 8 bars.  Higher numbers are more sensitive.
-float level[16];		// An array to hold the 16 frequency bands
-int   shown[16];		// This array holds the on-screen levels.  When the signal drops quickly, these are used to lower the on-screen level 1 bar per update, which looks more pleasing to corresponds to human sound perception.
+float scale = 60.0;		// The scale sets how much sound is needed in each frequency range to show all 16 bars.  Higher numbers are more sensitive.
+float level[18];		// An array to hold the 16 frequency bands
+int   shown[18];		// This array holds the on-screen levels.  When the signal drops quickly, these are used to lower the on-screen level 1 bar per update, which looks more pleasing to corresponds to human sound perception.
 
 void setup()
 {
@@ -41,23 +41,25 @@ void loop()
     level[0] =  fft1024.read(0);
     level[1] =  fft1024.read(1);
     level[2] =  fft1024.read(2, 3);
-    level[3] =  fft1024.read(4, 6);
-    level[4] =  fft1024.read(7, 10);
-    level[5] =  fft1024.read(11, 15);
-    level[6] =  fft1024.read(16, 22);
-    level[7] =  fft1024.read(23, 32);
-    level[8] =  fft1024.read(33, 46);
-    level[9] =  fft1024.read(47, 66);
-    level[10] = fft1024.read(67, 93);
-    level[11] = fft1024.read(94, 131);
-    level[12] = fft1024.read(132, 184);
-    level[13] = fft1024.read(185, 257);
-    level[14] = fft1024.read(258, 359);
-    level[15] = fft1024.read(360, 511);
+    level[3] =  fft1024.read(4, 5);
+    level[4] =  fft1024.read(6, 9);
+    level[5] =  fft1024.read(10, 13);
+    level[6] =  fft1024.read(14, 18);
+    level[7] =  fft1024.read(19, 26);
+    level[8] =  fft1024.read(27, 35);
+    level[9] =  fft1024.read(36, 49);
+    level[10] = fft1024.read(50, 66);
+    level[11] = fft1024.read(67, 89);
+    level[12] = fft1024.read(90, 120);
+    level[13] = fft1024.read(121, 160);
+    level[14] = fft1024.read(161, 215);
+    level[15] = fft1024.read(216, 287);
+    level[16] = fft1024.read(288, 383);
+    level[17] = fft1024.read(384, 511);
 
-    for (int i=0; i<16; i++)
+    for (int i=0; i<18; i++)
     {
-      Serial.print(level[i]*60.00);
+      Serial.print(level[i]*scale);
       Serial.print(" ");
 
       /*
