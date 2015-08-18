@@ -30,6 +30,7 @@ int   shown[16];		// This array holds the on-screen levels.  When the signal dro
 void setup()
 {
   AudioMemory(12);		// Audio requires memory to work.
+  Serial.begin(38400);
 }
 
 void loop()
@@ -56,7 +57,7 @@ void loop()
 
     for (int i=0; i<16; i++)
     {
-      Serial.print(level[i]);
+      Serial.print(level[i]*60.00);
       Serial.print(" ");
 
       /*
@@ -79,7 +80,9 @@ void loop()
       }
 	  */
     }
+
     Serial.print(" CPU:");
     Serial.println(AudioProcessorUsageMax());
+    delay(250);
   }
 }
