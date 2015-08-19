@@ -118,6 +118,6 @@ void loop()
     		}
     }
     leds.show();
-    //delay(1000);
+    delay(50);
   }
 }
