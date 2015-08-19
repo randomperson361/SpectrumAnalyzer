@@ -20,10 +20,12 @@
 #include <Audio.h>
 #include <stdio.h>
 
+// initialize audio classes
 AudioInputAnalog         adc1(A3);
 AudioAnalyzeFFT1024      fft1024;
 AudioConnection          patchCord1(adc1, fft1024);
 
+// initialize global variables
 float scale = 50.0;		// The scale sets how much sound is needed in each frequency range to show all 16 bars.  Higher numbers are more sensitive.
 float level[18];		// An array to hold the 16 frequency bands
 int   shown[18];		// This array holds the on-screen levels.  When the signal drops quickly, these are used to lower the on-screen level 1 bar per update, which looks more pleasing to corresponds to human sound perception.
@@ -57,24 +59,24 @@ void loop()
     level[16] = fft1024.read(160, 202);
     level[17] = fft1024.read(203, 255);
 
-    for (int i=0; i<18; i++)			// calculate number of levels to light
+    // calculate number of levels to light for each bar
+    for (int i=0; i<18; i++)
     {
+    	// TODO: conversion from FFT data to display bars should be exponentially scaled.  But how keep it a simple example?
+    	int val = level[i] * scale;
+    	if (val > 16) val = 16;
 
-      // TODO: conversion from FFT data to display bars should be exponentially scaled.  But how keep it a simple example?
-      int val = level[i] * scale;
-      if (val > 16) val = 16;
-
-      if (val >= shown[i])
-      {
-        shown[i] = val;
-      }
-      else
-      {
-        if (shown[i] > 0)
-        {
-        	shown[i] = shown[i] - 1;
-        }
-      }
+    	if (val >= shown[i])
+    	{
+    		shown[i] = val;
+    	}
+    	else
+    	{
+    		if (shown[i] > 0)
+    		{
+    			shown[i] = shown[i] - 1;
+    		}
+    	}
     }
 
     // Clear terminal
@@ -83,6 +85,7 @@ void loop()
     Serial.write(27);
     Serial.print("[H");     // cursor to home command
 
+    // print plot to terminal
     for (int row = 0; row<=16; row++)
     {
     	for (int column = 0; column<18; column++)
@@ -108,6 +111,8 @@ void loop()
     	Serial.println();
     }
     Serial.println("** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **");
+
+    // delay to slow refresh rate
     delay(50);
   }
 }
