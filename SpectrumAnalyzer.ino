@@ -18,6 +18,7 @@
 */
 
 #include <Audio.h>
+#include <stdio.h>
 
 AudioInputAnalog         adc1(A3);
 AudioAnalyzeFFT1024      fft1024;
@@ -76,6 +77,37 @@ void loop()
       }
     }
 
-    //delay(1000);
+    // Clear terminal
+    Serial.write(27);       // ESC command
+    Serial.print("[2J");    // clear screen command
+    Serial.write(27);
+    Serial.print("[H");     // cursor to home command
+
+    for (int row = 0; row<=16; row++)
+    {
+    	for (int column = 0; column<18; column++)
+    	{
+        	if (row==16)
+        	{
+        		char buffer[5];
+        		sprintf(buffer,"%2d ",shown[column]);
+        		Serial.print(buffer);
+        	}
+        	else
+        	{
+				if (shown[column]>=(16-row))
+				{
+					Serial.print("-- ");
+				}
+				else
+				{
+					Serial.print("   ");
+				}
+        	}
+    	}
+    	Serial.println();
+    }
+    Serial.println("** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **");
+    delay(50);
   }
 }
