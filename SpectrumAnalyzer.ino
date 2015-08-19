@@ -88,13 +88,14 @@ void loop()
       }
     }
 
+
     for (int bar=0; bar<18; bar++)			// set pixels
     {
     		for (int led=0; led<16; led++)
     		{
     			if((bar-1)%3 == 0)				// reverse upside down bar
     			{
-					if(shown[bar]>=(15-led))
+					if(shown[bar]>=(16-led))
 					{
 						leds.setPixel((bar*16)+led, WHITE);
 					}
@@ -105,7 +106,7 @@ void loop()
     			}
     			else
     			{
-					if(shown[bar]>=led)
+					if(shown[bar]>=(led+1))
 					{
 						leds.setPixel((bar*16)+led, WHITE);
 					}
@@ -117,5 +118,6 @@ void loop()
     		}
     }
     leds.show();
+    //delay(1000);
   }
 }
