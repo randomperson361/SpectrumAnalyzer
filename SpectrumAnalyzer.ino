@@ -18,7 +18,17 @@
 */
 
 #include <Audio.h>
+#include <OctoWS2811.h>
 
+#define WHITE  0xFFFFFF
+#define BLACK  0x000000
+
+const int ledsPerStrip = 48;
+DMAMEM int displayMemory[ledsPerStrip*6];
+int drawingMemory[ledsPerStrip*6];
+const int config = WS2811_GRB | WS2811_800kHz;
+
+OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
 AudioInputAnalog         adc1(A3);
 AudioAnalyzeFFT1024      fft1024;
 AudioConnection          patchCord1(adc1, fft1024);
@@ -30,7 +40,8 @@ int   shown[18];		// This array holds the on-screen levels.  When the signal dro
 void setup()
 {
   AudioMemory(12);		// Audio requires memory to work.
-  Serial.begin(38400);
+  leds.begin();
+  leds.show();
 }
 
 void loop()
@@ -57,7 +68,7 @@ void loop()
     level[16] = fft1024.read(159, 201);
     level[17] = fft1024.read(202, 255);
 
-    for (int i=0; i<18; i++)
+    for (int i=0; i<18; i++)			// calculate number of levels to light
     {
 
       // TODO: conversion from FFT data to display bars should be exponentially scaled.  But how keep it a simple example?
@@ -75,12 +86,36 @@ void loop()
         	shown[i] = shown[i] - 1;
         }
       }
-      Serial.print(shown[i]);
-      Serial.print(" ");
     }
 
-    Serial.print(" CPU:");
-    Serial.println(AudioProcessorUsageMax());
-    delay(250);
+    for (int bar=0; bar<18; bar++)			// set pixels
+    {
+    		for (int led=0; led<16; led++)
+    		{
+    			if((bar-1)%3 == 0)				// reverse upside down bar
+    			{
+					if(shown[bar]>=(16-led))
+					{
+						leds.setPixel((bar*16)+led, WHITE);
+					}
+					else
+					{
+						leds.setPixel((bar*16)+led, BLACK);
+					}
+    			}
+    			else
+    			{
+					if(shown[bar]>=led)
+					{
+						leds.setPixel((bar*16)+led, WHITE);
+					}
+					else
+					{
+						leds.setPixel((bar*16)+led, BLACK);
+					}
+    			}
+    		}
+    }
+    leds.show();
   }
 }
