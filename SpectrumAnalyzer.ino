@@ -33,7 +33,7 @@ AudioInputAnalog         adc1(A3);
 AudioAnalyzeFFT1024      fft1024;
 AudioConnection          patchCord1(adc1, fft1024);
 
-float scale = 60.0;		// The scale sets how much sound is needed in each frequency range to show all 16 bars.  Higher numbers are more sensitive.
+float scale = 50.0;		// The scale sets how much sound is needed in each frequency range to show all 16 bars.  Higher numbers are more sensitive.
 float level[18];		// An array to hold the 16 frequency bands
 int   shown[18];		// This array holds the on-screen levels.  When the signal drops quickly, these are used to lower the on-screen level 1 bar per update, which looks more pleasing to corresponds to human sound perception.
 
@@ -49,24 +49,24 @@ void loop()
   if (fft1024.available())
   {
     // read the 512 FFT frequencies into 16 level music is heard in octaves, but the FFT data is linear, so for the higher octaves, read many FFT bins together.
-    level[0] =  fft1024.read(0);
-    level[1] =  fft1024.read(1);
-    level[2] =  fft1024.read(2, 3);
-    level[3] =  fft1024.read(4, 5);
-    level[4] =  fft1024.read(6, 7);
-    level[5] =  fft1024.read(8, 11);
-    level[6] =  fft1024.read(12, 15);
-    level[7] =  fft1024.read(16, 20);
-    level[8] =  fft1024.read(21, 27);
-    level[9] =  fft1024.read(28, 35);
-    level[10] = fft1024.read(36, 45);
-    level[11] = fft1024.read(46, 59);
-    level[12] = fft1024.read(60, 75);
-    level[13] = fft1024.read(76, 97);
-    level[14] = fft1024.read(98, 124);
-    level[15] = fft1024.read(125, 158);
-    level[16] = fft1024.read(159, 201);
-    level[17] = fft1024.read(202, 255);
+    level[0] =  fft1024.read(2);
+    level[1] =  fft1024.read(3);
+    level[2] =  fft1024.read(4, 5);
+    level[3] =  fft1024.read(6, 7);
+    level[4] =  fft1024.read(8, 10);
+    level[5] =  fft1024.read(11, 13);
+    level[6] =  fft1024.read(14, 17);
+    level[7] =  fft1024.read(18, 22);
+    level[8] =  fft1024.read(23, 29);
+    level[9] =  fft1024.read(30, 37);
+    level[10] = fft1024.read(38, 47);
+    level[11] = fft1024.read(48, 60);
+    level[12] = fft1024.read(61, 77);
+    level[13] = fft1024.read(78, 98);
+    level[14] = fft1024.read(99, 125);
+    level[15] = fft1024.read(126, 159);
+    level[16] = fft1024.read(160, 202);
+    level[17] = fft1024.read(203, 255);
 
     for (int i=0; i<18; i++)			// calculate number of levels to light
     {
@@ -94,7 +94,7 @@ void loop()
     		{
     			if((bar-1)%3 == 0)				// reverse upside down bar
     			{
-					if(shown[bar]>=(16-led))
+					if(shown[bar]>=(15-led))
 					{
 						leds.setPixel((bar*16)+led, WHITE);
 					}
