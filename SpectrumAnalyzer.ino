@@ -25,94 +25,117 @@ AudioInputAnalog         adc1(A3);
 AudioAnalyzeFFT1024      fft1024;
 AudioConnection          patchCord1(adc1, fft1024);
 
+// The display size and color to use
+const int matrix_width = 18;
+const int matrix_height = 16;
+
 // initialize global variables
-float scale = 50.0;		// The scale sets how much sound is needed in each frequency range to show all 16 bars.  Higher numbers are more sensitive.
-float level[18];		// An array to hold the 16 frequency bands
-int   shown[18];		// This array holds the on-screen levels.  When the signal drops quickly, these are used to lower the on-screen level 1 bar per update, which looks more pleasing to corresponds to human sound perception.
+float level[matrix_width];			// An array to holds the raw magnitude of the 16 frequency bands
+int shown[matrix_width];			// This array holds the on-screen levels.  When the signal drops quickly, these are used to lower the on-screen level 1 bar per update, which looks more pleasing to corresponds to human sound perception.
+
+// These parameters adjust the vertical thresholds
+const float maxLevel = 0.3;      // 1.0 = max, lower is more "sensitive"
+const float dynamicRange = 40.0; // total range to display, in decibels
+const float linearBlend = 0.5;   // useful range is 0 to 0.7
+
+// This array holds the volume level (0 to 1.0) for each vertical pixel to turn on.  Computed in setup() using the 3 parameters above.
+float thresholdVertical[matrix_height];
+
+// This array specifies how many of the FFT frequency bin to use for each horizontal pixel.  Because humans hear in octaves and FFT bins are linear, the low frequencies use a small number of bins, higher frequencies use more.
+int frequencyBinsHorizontal[matrix_width] = {1, 1, 2, 2, 3, 3, 4, 5, 7, 8, 10, 13, 17, 21, 27, 34, 43, 54};		// only goes up to half the bins, so to 12500Hz, the higher freq bins picked up a lot of noise
+float micCorrectionFactor[matrix_width] = {1.58, 1.41, 1.26, 1.12, 1.06, 1.03, 1, 1, 1, 1, 1, 1, 0.891, 0.794, 0.708, 0.631, 0.708, 1};
+
+// Run once from setup, the compute the vertical levels
+void computeVerticalLevels()
+{
+	unsigned int y;
+	float n, logLevel, linearLevel;
+
+	for (y=0; y < matrix_height; y++)
+	{
+		n = (float)y / (float)(matrix_height - 1);
+		logLevel = pow10f(n * -1.0 * (dynamicRange / 20.0));
+		linearLevel = 1.0 - n;
+		linearLevel = linearLevel * linearBlend;
+		logLevel = logLevel * (1.0 - linearBlend);
+		thresholdVertical[y] = (logLevel + linearLevel) * maxLevel;
+	}
+}
 
 void setup()
 {
-  AudioMemory(12);		// Audio requires memory to work.
+	// the audio library needs to be given memory to start working
+	AudioMemory(12);		// Audio requires memory to work.
+
+	// compute the vertical thresholds before starting
+	computeVerticalLevels();
 }
 
 void loop()
 {
-  if (fft1024.available())
-  {
-    // read the 512 FFT frequencies into 16 level music is heard in octaves, but the FFT data is linear, so for the higher octaves, read many FFT bins together.
-    level[0] =  fft1024.read(2);
-    level[1] =  fft1024.read(3);
-    level[2] =  fft1024.read(4, 5);
-    level[3] =  fft1024.read(6, 7);
-    level[4] =  fft1024.read(8, 10);
-    level[5] =  fft1024.read(11, 13);
-    level[6] =  fft1024.read(14, 17);
-    level[7] =  fft1024.read(18, 22);
-    level[8] =  fft1024.read(23, 29);
-    level[9] =  fft1024.read(30, 37);
-    level[10] = fft1024.read(38, 47);
-    level[11] = fft1024.read(48, 60);
-    level[12] = fft1024.read(61, 77);
-    level[13] = fft1024.read(78, 98);
-    level[14] = fft1024.read(99, 125);
-    level[15] = fft1024.read(126, 159);
-    level[16] = fft1024.read(160, 202);
-    level[17] = fft1024.read(203, 255);
+	int currentFreqBin, prevShown;
+	prevShown = 0;
 
-    // calculate number of levels to light for each bar
-    for (int i=0; i<18; i++)
-    {
-    	// TODO: conversion from FFT data to display bars should be exponentially scaled.  But how keep it a simple example?
-    	int val = level[i] * scale;
-    	if (val > 16) val = 16;
+	if (fft1024.available())
+	{
+		currentFreqBin = 2;				// skip the first two bins since they are always high
 
-    	if (val >= shown[i])
-    	{
-    		shown[i] = val;
-    	}
-    	else
-    	{
-    		if (shown[i] > 0)
-    		{
-    			shown[i] = shown[i] - 1;
-    		}
-    	}
-    }
-
-    // Clear terminal
-    Serial.write(27);       // ESC command
-    Serial.print("[2J");    // clear screen command
-    Serial.write(27);
-    Serial.print("[H");     // cursor to home command
-
-    // print plot to terminal
-    for (int row = 0; row<=16; row++)
-    {
-    	for (int column = 0; column<18; column++)
-    	{
-        	if (row==16)
-        	{
-        		char buffer[5];
-        		sprintf(buffer,"%2d ",shown[column]);
-        		Serial.print(buffer);
-        	}
-        	else
-        	{
-				if (shown[column]>=(16-row))
+		// read fft and calculate number of levels to light for each bar
+		for (int i=0; i<matrix_width; i++)
+		{
+			level[i] = micCorrectionFactor[i] * fft1024.read(currentFreqBin, currentFreqBin + frequencyBinsHorizontal[i] - 1);
+			prevShown = shown[i];
+			shown[i] = 0;
+			for (int j=0; j<matrix_height; j++)
+			{
+				if (level[i] >= thresholdVertical[j])
 				{
-					Serial.print("-- ");
+					shown[i] = 16-j;
+					break;
+				}
+			}
+
+			if ((shown[i]<prevShown) && (shown[i]>0))
+			{
+				shown[i] = prevShown - 1;
+			}
+			currentFreqBin += frequencyBinsHorizontal[i];
+		}
+
+		// Clear terminal
+		Serial.write(27);       // ESC command
+		Serial.print("[2J");    // clear screen command
+		Serial.write(27);
+		Serial.print("[H");     // cursor to home command
+
+		// print plot to terminal
+		for (int row = 0; row<=matrix_height; row++)
+		{
+			for (int column = 0; column<matrix_width; column++)
+			{
+				if (row==16)
+				{
+					char buffer[5];
+					sprintf(buffer,"%2d ", shown[column]);
+					Serial.print(buffer);
 				}
 				else
 				{
-					Serial.print("   ");
+					if (shown[column]>=(16-row))
+					{
+						Serial.print("-- ");
+					}
+					else
+					{
+						Serial.print("   ");
+					}
 				}
-        	}
-    	}
-    	Serial.println();
-    }
-    Serial.println("** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **");
+			}
+			Serial.println();
+		}
+		Serial.println("** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **");
 
-    // delay to slow refresh rate
-    delay(50);
-  }
+		// delay to slow refresh rate
+		delay(50);
+	}
 }
