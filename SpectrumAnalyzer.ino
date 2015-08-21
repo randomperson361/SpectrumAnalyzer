@@ -58,9 +58,11 @@ float thresholdVertical[matrix_height];
 
 // These parameters are used to calculate how fast the bars fall after they have risen and peak indicator settings
 const bool usePeakIndicator = TRUE;	// determines wether or not a peak indicator bar will be used
-const int topBarFallDelay = 20;		// number of milliseconds it takes for the top bar to fall back down a level
+const int topBarFallDelay = 33;		// number of milliseconds it takes for the top bar to fall back down a level
+const int topBarRiseDelay = 33;		// number of milliseconds it takes for the top bar to rise up a level
 const int peakBarFallDelay = 100;	// number of milliseconds it takes for the peak bar to fall back down a level
-elapsedMillis topBarTimer[matrix_width];			// auto incrementing variable to determine time since the top bar last fell for each bar
+elapsedMillis topBarRiseTimer[matrix_width];		// auto incrementing variable to determine time since the top bar last rose for each bar
+elapsedMillis topBarFallTimer[matrix_width];		// auto incrementing variable to determine time since the top bar last fell for each bar
 elapsedMillis peakBarTimer[matrix_width];			// auto incrementing variable to determine time since the peak bar last fell for each bar
 
 // This array specifies how many of the FFT frequency bin to use for each horizontal pixel.  Because humans hear in octaves and FFT bins are linear, the low frequencies use a small number of bins, higher frequencies use more.
@@ -136,7 +138,8 @@ void setup()
   leds.show();
   for (int i=0; i<matrix_width; i++)
   {
-	  topBarTimer[i] = 0;
+	  topBarRiseTimer[i] = 0;
+	  topBarFallTimer[i] = 0;
 	  peakBarTimer[i] = 0;
 	  peakIndLevel[i] = 0;
   }
@@ -168,13 +171,25 @@ void loop()
 			// delay top bar falling to make animation look more natural
 			if (shown[i] >= prevShown)
 			{
-				topBarTimer[i] = 0;
+				topBarFallTimer[i] = 0;
 			}
-			else if ((shown[i]>0) && (topBarTimer[i] >= topBarFallDelay))
+			else if ((shown[i]>0) && (topBarFallTimer[i] >= topBarFallDelay))
 			{
 				shown[i] = prevShown - 1;
-				topBarTimer[i] = 0;
+				topBarFallTimer[i] = 0;
 			}
+
+			// delay top barr rising to make animation look more natural
+			if (shown[i] <= prevShown)
+			{
+				topBarRiseTimer[i] = 0;
+			}
+			else if ((shown[i]>0) && (topBarRiseTimer[i] >= topBarRiseDelay))
+			{
+				shown[i] = prevShown + 1;
+				topBarRiseTimer[i] = 0;
+			}
+
 
 			// calculate where the peak indicator should be if it is being used
 			if (usePeakIndicator)
