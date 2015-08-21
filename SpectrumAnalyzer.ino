@@ -57,13 +57,16 @@ const float linearBlend = 0.3;   // useful range is 0 to 0.7
 float thresholdVertical[matrix_height];
 
 // These parameters are used to calculate how fast the bars fall after they have risen and peak indicator settings
+const int colorMode = 1;			// sets which mode to use to determine coloration of the bars
 const bool usePeakIndicator = TRUE;	// determines wether or not a peak indicator bar will be used
 const int topBarFallDelay = 33;		// number of milliseconds it takes for the top bar to fall back down a level
 const int topBarRiseDelay = 33;		// number of milliseconds it takes for the top bar to rise up a level
 const int peakBarFallDelay = 100;	// number of milliseconds it takes for the peak bar to fall back down a level
+const int displayUpdateDelay = 33;	// nuber of milliseconds it takes for the display to refresh
 elapsedMillis topBarRiseTimer[matrix_width];		// auto incrementing variable to determine time since the top bar last rose for each bar
 elapsedMillis topBarFallTimer[matrix_width];		// auto incrementing variable to determine time since the top bar last fell for each bar
 elapsedMillis peakBarTimer[matrix_width];			// auto incrementing variable to determine time since the peak bar last fell for each bar
+elapsedMillis displayUpdateTimer;					// auto incrementing variable to determine time last display update
 
 // This array specifies how many of the FFT frequency bin to use for each horizontal pixel.  Because humans hear in octaves and FFT bins are linear, the low frequencies use a small number of bins, higher frequencies use more.
 int frequencyBinsHorizontal[matrix_width] = {1, 1, 2, 2, 3, 3, 4, 5, 7, 8, 10, 13, 17, 21, 27, 34, 43, 54};		// only goes up to half the bins, so to ~12500Hz, the higher freq bins picked up a lot of noise
@@ -143,6 +146,7 @@ void setup()
 	  peakBarTimer[i] = 0;
 	  peakIndLevel[i] = 0;
   }
+  displayUpdateTimer = 0;
 }
 
 void loop()
@@ -217,7 +221,11 @@ void loop()
     			{
 					if (shown[bar]>=(16-led))
 					{
-						leds.setPixel((bar*16)+led, makeColor(320-(shown[bar]*20),100,50));
+						switch (colorMode)
+						{
+						case 0: leds.setPixel((bar*16)+led, makeColor(320-(shown[bar]*20),100,50)); break;
+						case 1: leds.setPixel((bar*16)+led, makeColor(320-((16-led)*20),100,50)); break;
+						}
 					}
 					else if (peakIndLevel[bar] == (16-led))
 					{
@@ -233,7 +241,11 @@ void loop()
 
 					if (shown[bar]>=(led+1))
 					{
-						leds.setPixel((bar*16)+led, makeColor(320-(shown[bar]*20),100,50));
+						switch (colorMode)
+						{
+						case 0: leds.setPixel((bar*16)+led, makeColor(320-(shown[bar]*20),100,50)); break;
+						case 1: leds.setPixel((bar*16)+led, makeColor(320-((led+1)*20),100,50)); break;
+						}
 					}
 					else if (peakIndLevel[bar] == (led+1))
 					{
@@ -246,7 +258,10 @@ void loop()
     			}
     		}
     }
-    leds.show();
-    //delay(50);
+    if (displayUpdateTimer >= displayUpdateDelay)
+    {
+    	leds.show();
+    	displayUpdateTimer = 0;
+    }
   }
 }
