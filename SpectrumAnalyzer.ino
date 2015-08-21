@@ -20,6 +20,9 @@
 #include <Audio.h>
 #include <OctoWS2811.h>
 
+#define TRUE   1
+#define FALSE  0
+
 #define WHITE  0xFFFFFF
 #define BLACK  0x000000
 
@@ -41,7 +44,9 @@ AudioConnection          patchCord1(adc1, fft1024);
 
 // Arrays needed to calculate what to show on bars
 float level[matrix_width];			// An array to holds the raw magnitude of the 16 frequency bands
+// The following two arrays have a range of 0 to 16, indicating the number of bars shown
 int shown[matrix_width];			// This array holds the on-screen levels
+int peakIndLevel[matrix_width];		// This array determines how high the peak indicator bar is
 
 // These parameters adjust the vertical thresholds
 const float maxLevel = 0.3;      // 1.0 = max, lower is more "sensitive"
@@ -50,6 +55,13 @@ const float linearBlend = 0.3;   // useful range is 0 to 0.7
 
 // This array holds the volume level (0 to 1.0) for each vertical pixel to turn on.  Computed in setup() using the 3 parameters above.
 float thresholdVertical[matrix_height];
+
+// These parameters are used to calculate how fast the bars fall after they have risen and peak indicator settings
+const bool usePeakIndicator = TRUE;	// determines wether or not a peak indicator bar will be used
+const int topBarFallDelay = 20;		// number of milliseconds it takes for the top bar to fall back down a level
+const int peakBarFallDelay = 100;	// number of milliseconds it takes for the peak bar to fall back down a level
+elapsedMillis topBarTimer[matrix_width];			// auto incrementing variable to determine time since the top bar last fell for each bar
+elapsedMillis peakBarTimer[matrix_width];			// auto incrementing variable to determine time since the peak bar last fell for each bar
 
 // This array specifies how many of the FFT frequency bin to use for each horizontal pixel.  Because humans hear in octaves and FFT bins are linear, the low frequencies use a small number of bins, higher frequencies use more.
 int frequencyBinsHorizontal[matrix_width] = {1, 1, 2, 2, 3, 3, 4, 5, 7, 8, 10, 13, 17, 21, 27, 34, 43, 54};		// only goes up to half the bins, so to ~12500Hz, the higher freq bins picked up a lot of noise
@@ -122,6 +134,12 @@ void setup()
   computeVerticalLevels();	// compute the vertical thresholds before starting
   leds.begin();
   leds.show();
+  for (int i=0; i<matrix_width; i++)
+  {
+	  topBarTimer[i] = 0;
+	  peakBarTimer[i] = 0;
+	  peakIndLevel[i] = 0;
+  }
 }
 
 void loop()
@@ -147,9 +165,30 @@ void loop()
 				}
 			}
 
-			if ((shown[i]<prevShown) && (shown[i]>0))
+			// delay top bar falling to make animation look more natural
+			if (shown[i] >= prevShown)
+			{
+				topBarTimer[i] = 0;
+			}
+			else if ((shown[i]>0) && (topBarTimer[i] >= topBarFallDelay))
 			{
 				shown[i] = prevShown - 1;
+				topBarTimer[i] = 0;
+			}
+
+			// calculate where the peak indicator should be if it is being used
+			if (usePeakIndicator)
+			{
+				if (shown[i] >= peakIndLevel[i])
+				{
+					peakIndLevel[i] = shown[i]+1;
+					peakBarTimer[i] = 0;
+				}
+				else if ((peakIndLevel[i] > (shown[i]+1)) && (peakIndLevel[i]>1) && (peakBarTimer[i] >= peakBarFallDelay))
+				{
+					peakIndLevel[i]--;
+					peakBarTimer[i] = 0;
+				}
 			}
 			currentFreqBin += frequencyBinsHorizontal[i];
 		}
@@ -161,9 +200,13 @@ void loop()
     		{
     			if((bar-1)%3 == 0)				// reverse upside down bar
     			{
-					if(shown[bar]>=(16-led))
+					if (shown[bar]>=(16-led))
 					{
 						leds.setPixel((bar*16)+led, makeColor(320-(shown[bar]*20),100,50));
+					}
+					else if (peakIndLevel[bar] == (16-led))
+					{
+						leds.setPixel((bar*16)+led, WHITE);
 					}
 					else
 					{
@@ -173,9 +216,13 @@ void loop()
     			else
     			{
 
-					if(shown[bar]>=(led+1))
+					if (shown[bar]>=(led+1))
 					{
 						leds.setPixel((bar*16)+led, makeColor(320-(shown[bar]*20),100,50));
+					}
+					else if (peakIndLevel[bar] == (led+1))
+					{
+						leds.setPixel((bar*16)+led, WHITE);
 					}
 					else
 					{
@@ -185,6 +232,6 @@ void loop()
     		}
     }
     leds.show();
-    delay(50);
+    //delay(50);
   }
 }
