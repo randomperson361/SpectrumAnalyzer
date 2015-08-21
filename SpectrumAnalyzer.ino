@@ -49,7 +49,7 @@ int shown[matrix_width];			// This array holds the on-screen levels
 int peakIndLevel[matrix_width];		// This array determines how high the peak indicator bar is
 
 // These parameters adjust the vertical thresholds
-const float maxLevel = 0.3;      // 1.0 = max, lower is more "sensitive"
+const float maxLevel = 0.25;      // 1.0 = max, lower is more "sensitive"
 const float dynamicRange = 40.0; // total range to display, in decibels
 const float linearBlend = 0.3;   // useful range is 0 to 0.7
 
@@ -59,10 +59,10 @@ float thresholdVertical[matrix_height];
 // These parameters are used to calculate how fast the bars fall after they have risen and peak indicator settings
 const int colorMode = 1;			// sets which mode to use to determine coloration of the bars
 const bool usePeakIndicator = TRUE;	// determines wether or not a peak indicator bar will be used
-const int topBarFallDelay = 33;		// number of milliseconds it takes for the top bar to fall back down a level
-const int topBarRiseDelay = 33;		// number of milliseconds it takes for the top bar to rise up a level
+const int topBarFallDelay = 0;		// number of milliseconds it takes for the top bar to fall back down a level
+const int topBarRiseDelay = 0;		// number of milliseconds it takes for the top bar to rise up a level
 const int peakBarFallDelay = 100;	// number of milliseconds it takes for the peak bar to fall back down a level
-const int displayUpdateDelay = 33;	// nuber of milliseconds it takes for the display to refresh
+const int displayUpdateDelay = 0;	// number of milliseconds it takes for the display to refresh
 elapsedMillis topBarRiseTimer[matrix_width];		// auto incrementing variable to determine time since the top bar last rose for each bar
 elapsedMillis topBarFallTimer[matrix_width];		// auto incrementing variable to determine time since the top bar last fell for each bar
 elapsedMillis peakBarTimer[matrix_width];			// auto incrementing variable to determine time since the peak bar last fell for each bar
@@ -223,8 +223,8 @@ void loop()
 					{
 						switch (colorMode)
 						{
-						case 0: leds.setPixel((bar*16)+led, makeColor(320-(shown[bar]*20),100,50)); break;
-						case 1: leds.setPixel((bar*16)+led, makeColor(320-((16-led)*20),100,50)); break;
+						case 0: leds.setPixel((bar*16)+led, makeColor(256-(shown[bar]*16),100,50)); break;
+						case 1: leds.setPixel((bar*16)+led, makeColor(256-((16-led)*16),100,50)); break;
 						}
 					}
 					else if (peakIndLevel[bar] == (16-led))
@@ -243,8 +243,8 @@ void loop()
 					{
 						switch (colorMode)
 						{
-						case 0: leds.setPixel((bar*16)+led, makeColor(320-(shown[bar]*20),100,50)); break;
-						case 1: leds.setPixel((bar*16)+led, makeColor(320-((led+1)*20),100,50)); break;
+						case 0: leds.setPixel((bar*16)+led, makeColor(256-(shown[bar]*16),100,50)); break;
+						case 1: leds.setPixel((bar*16)+led, makeColor(256-((led+1)*16),100,50)); break;
 						}
 					}
 					else if (peakIndLevel[bar] == (led+1))
