@@ -138,22 +138,22 @@ int rainbowColor(int index)
 	int color;
 	switch (index)
 	{
-		case 0: color=0x8800FF; break;
-		case 1: color=0x1800FF; break;
-		case 2: color=0x0058FF; break;
-		case 3: color=0x00C9FF; break;
-		case 4: color=0x00FFC3; break;
-		case 5: color=0x00FF53; break;
-		case 6: color=0x1DFF00; break;
-		case 7: color=0x8EFF00; break;
-		case 8: color=0xFFFF00; break;
-		case 9: color=0xFFDA00; break;
-		case 10: color=0xFFB600; break;
-		case 11: color=0xFF9100; break;
-		case 12: color=0xFF6D00; break;
-		case 13: color=0xFF4800; break;
-		case 14: color=0xFF2400; break;
+		case 1: color=0x8800FF; break;
+		case 2: color=0x2400FF; break;
+		case 3: color=0x003FFF; break;
+		case 4: color=0x00A3FF; break;
+		case 5: color=0x00FFF6; break;
+		case 6: color=0x00FF91; break;
+		case 7: color=0x00FF2D; break;
+		case 8: color=0x36FF00; break;
+		case 9: color=0x9AFF00; break;
+		case 10: color=0xFFFF00; break;
+		case 11: color=0xFFBF00; break;
+		case 12: color=0xFF7F00; break;
+		case 13: color=0xFF3F00; break;
+		case 14: color=0xFF0000; break;
 		case 15: color=0xFF0000; break;
+		case 16: color=WHITE; break;
 		default: color=WHITE; break;
 	}
 	return color;
