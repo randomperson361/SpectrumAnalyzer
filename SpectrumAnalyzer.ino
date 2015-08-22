@@ -22,7 +22,6 @@
 
 #define TRUE   1
 #define FALSE  0
-
 #define WHITE  0xFFFFFF
 #define BLACK  0x000000
 
@@ -50,7 +49,7 @@ int peakIndLevel[matrix_width];		// This array determines how high the peak indi
 
 // These parameters adjust the vertical thresholds
 const float maxLevel = 0.2;      // 1.0 = max, lower is more "sensitive"
-const float dynamicRange = 50.0; // total range to display, in decibels
+const float dynamicRange = 45.0; // total range to display, in decibels
 const float linearBlend = 0.3;   // useful range is 0 to 0.7
 
 // This array holds the volume level (0 to 1.0) for each vertical pixel to turn on.  Computed in setup() using the 3 parameters above.
@@ -133,6 +132,33 @@ int makeColor(unsigned int hue, unsigned int saturation, unsigned int lightness)
 	return (red << 16) | (green << 8) | blue;
 }
 
+// selects a color from the predefined rainbow with yellow centered
+int rainbowColor(int index)
+{
+	int color;
+	switch (index)
+	{
+		case 0: color=0x8800FF; break;
+		case 1: color=0x1800FF; break;
+		case 2: color=0x0058FF; break;
+		case 3: color=0x00C9FF; break;
+		case 4: color=0x00FFC3; break;
+		case 5: color=0x00FF53; break;
+		case 6: color=0x1DFF00; break;
+		case 7: color=0x8EFF00; break;
+		case 8: color=0xFFFF00; break;
+		case 9: color=0xFFDA00; break;
+		case 10: color=0xFFB600; break;
+		case 11: color=0xFF9100; break;
+		case 12: color=0xFF6D00; break;
+		case 13: color=0xFF4800; break;
+		case 14: color=0xFF2400; break;
+		case 15: color=0xFF0000; break;
+		default: color=WHITE; break;
+	}
+	return color;
+}
+
 void setup()
 {
   AudioMemory(12);		// Audio requires memory to work.
@@ -151,7 +177,7 @@ void setup()
 
 void loop()
 {
-  int currentFreqBin, prevShown;
+  int currentFreqBin, prevShown, ledHeight;
   prevShown = 0;
   if (fft1024.available())
   {
@@ -217,45 +243,33 @@ void loop()
     {
     		for (int led=0; led<16; led++)
     		{
-    			if((bar-1)%3 == 0)				// reverse upside down bar
+    			// height of led on panel from 1 to 16, 0 is for not shown
+    			if((bar-1)%3 == 0)		// correct for upside down wired bars
     			{
-					if (shown[bar]>=(16-led))
-					{
-						switch (colorMode)
-						{
-						case 0: leds.setPixel((bar*16)+led, makeColor(256-(shown[bar]*16),100,50)); break;
-						case 1: leds.setPixel((bar*16)+led, makeColor(256-((16-led)*16),100,50)); break;
-						}
-					}
-					else if (peakIndLevel[bar] == (16-led))
-					{
-						leds.setPixel((bar*16)+led, WHITE);
-					}
-					else
-					{
-						leds.setPixel((bar*16)+led, BLACK);
-					}
+    				ledHeight = 16-led;
     			}
     			else
     			{
-
-					if (shown[bar]>=(led+1))
-					{
-						switch (colorMode)
-						{
-						case 0: leds.setPixel((bar*16)+led, makeColor(256-(shown[bar]*16),100,50)); break;
-						case 1: leds.setPixel((bar*16)+led, makeColor(256-((led+1)*16),100,50)); break;
-						}
-					}
-					else if (peakIndLevel[bar] == (led+1))
-					{
-						leds.setPixel((bar*16)+led, WHITE);
-					}
-					else
-					{
-						leds.setPixel((bar*16)+led, BLACK);
-					}
+    				ledHeight = led+1;
     			}
+
+				if (shown[bar]>=ledHeight)
+				{
+					switch (colorMode)
+					{
+					case 0: leds.setPixel((bar*16)+led, rainbowColor(shown[bar])); break;
+					case 1: leds.setPixel((bar*16)+led, rainbowColor(ledHeight)); break;
+					}
+				}
+				else if (peakIndLevel[bar] == ledHeight)
+				{
+					leds.setPixel((bar*16)+led, WHITE);
+				}
+				else
+				{
+					leds.setPixel((bar*16)+led, BLACK);
+				}
+
     		}
     }
     if (displayUpdateTimer >= displayUpdateDelay)
