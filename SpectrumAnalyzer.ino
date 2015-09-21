@@ -27,10 +27,10 @@
 #define POT_PIN		17
 #define BUTTON_PIN 	19
 
+#define BLACK 0x000000
+
 #define TRUE   1
 #define FALSE  0
-#define WHITE  0xFFFFFF
-#define BLACK  0x000000
 
 // Display size
 const int matrix_width = 18;
@@ -51,12 +51,11 @@ AudioConnection          patchCord1(adc1, fft1024);
 
 // Arrays needed to calculate what to show on bars
 float level[matrix_width];			// An array to holds the raw magnitude of the 16 frequency bands
-// The following two arrays have a range of 0 to 16, indicating the number of bars shown
+// The following two arrays have a value range of 0 to 16, indicating the number of bars shown
 int shown[matrix_width];			// This array holds the on-screen levels
 int peakIndLevel[matrix_width];		// This array determines how high the peak indicator bar is
 
 // These parameters adjust the vertical thresholds
-// TODO: change analog reference from 1.2v to 3.3v
 const float maxLevel = 0.2;      // 1.0 = max, lower is more "sensitive"
 const float dynamicRange = 45.0; // total range to display, in decibels
 const float linearBlend = 0.3;   // useful range is 0 to 0.7
@@ -64,8 +63,11 @@ const float linearBlend = 0.3;   // useful range is 0 to 0.7
 // This array holds the volume level (0 to 1.0) for each vertical pixel to turn on.  Computed in setup() using the 3 parameters above.
 float thresholdVertical[matrix_height];
 
-// These parameters are used to calculate how fast the bars fall after they have risen and peak indicator settings
+// These variables are used to set the LED color mode and brightness
 int colorMode = 0;			// sets which mode to use to determine coloration of the bars
+int potVal;				// stores the reading from the pot
+
+// These parameters are used to calculate how fast the bars fall after they have risen and peak indicator settings
 const bool usePeakIndicator = TRUE;	// determines wether or not a peak indicator bar will be used
 const int topBarFallDelay = 0;		// number of milliseconds it takes for the top bar to fall back down a level
 const int topBarRiseDelay = 0;		// number of milliseconds it takes for the top bar to rise up a level
@@ -147,23 +149,23 @@ int rainbowColor(int index)
 	int color;
 	switch (index)
 	{
-		case 1: color=0x8800FF; break;
-		case 2: color=0x2400FF; break;
-		case 3: color=0x003FFF; break;
-		case 4: color=0x00A3FF; break;
-		case 5: color=0x00FFF6; break;
-		case 6: color=0x00FF91; break;
-		case 7: color=0x00FF2D; break;
-		case 8: color=0x36FF00; break;
-		case 9: color=0x9AFF00; break;
-		case 10: color=0xFFFF00; break;
-		case 11: color=0xFFBF00; break;
-		case 12: color=0xFF7F00; break;
-		case 13: color=0xFF3F00; break;
-		case 14: color=0xFF0000; break;
-		case 15: color=0xFF0000; break;
-		case 16: color=WHITE; break;
-		default: color=WHITE; break;
+		case 1: color=makeColor(272, 100, potVal); break;
+		case 2: color=makeColor(248, 100, potVal); break;
+		case 3: color=makeColor(225, 100, potVal); break;
+		case 4: color=makeColor(202, 100, potVal); break;
+		case 5: color=makeColor(178, 100, potVal); break;
+		case 6: color=makeColor(154, 100, potVal); break;
+		case 7: color=makeColor(131, 100, potVal); break;
+		case 8: color=makeColor(107, 100, potVal); break;
+		case 9: color=makeColor(84, 100, potVal); break;
+		case 10: color=makeColor(60, 100, potVal); break;
+		case 11: color=makeColor(45, 100, potVal); break;
+		case 12: color=makeColor(30, 100, potVal); break;
+		case 13: color=makeColor(15, 100, potVal); break;
+		case 14: color=makeColor(0, 100, potVal); break;
+		case 15: color=makeColor(0, 100, potVal); break;
+		case 16: color=makeColor(0, 0, potVal); break;
+		default: color=makeColor(0, 0, potVal); break;
 	}
 	return color;
 }
@@ -193,31 +195,16 @@ void setup()
   displayUpdateTimer = 0;
 }
 
-int val;
-
 void loop()
 {
-	if(!digitalRead(BUTTON_PIN))
-	{
-		colorMode++;
-		colorMode %= 2;
-		delay(100);
-	}
-
-	val = adc->analogRead(POT_PIN, ADC_1);
-	/*
-	if (!digitalRead(BUTTON_PIN))
-	{
-		Serial.print("Button:  ON\t\tPot: ");
-		Serial.println(val);
-	}
-	else
-	{
-		Serial.print("Button: OFF\t\tPot: ");
-		Serial.println(val);
-	}
-	delay(200);
-*/
+  if(!digitalRead(BUTTON_PIN))
+  {
+  	colorMode++;
+  	colorMode %= 2;
+  	delay(100);
+  }
+  potVal = adc->analogRead(POT_PIN, ADC_1);
+  potVal = (potVal*75)/255;
   int currentFreqBin, prevShown, ledHeight;
   prevShown = 0;
   if (fft1024.available())
@@ -304,7 +291,7 @@ void loop()
 				}
 				else if (peakIndLevel[bar] == ledHeight)
 				{
-					leds.setPixel((bar*16)+led, WHITE);
+					leds.setPixel((bar*16)+led, makeColor(0,0,potVal));
 				}
 				else
 				{
