@@ -44,7 +44,7 @@ void AudioInputAnalog::init(uint8_t pin)
 	// conversion.  This completes the self calibration stuff and
 	// leaves the ADC in a state that's mostly ready to use
 	analogReadRes(16);
-	analogReference(INTERNAL); // range 0 to 1.2 volts
+	analogReference(DEFAULT); // range 0 to 1.2 volts
 	analogReadAveraging(8);
 	// Actually, do many normal reads, to start with a nice DC level
 	for (i=0; i < 1024; i++) {

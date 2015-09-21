@@ -14,11 +14,18 @@
     pin 3 - Do not use as PWM.  Normal use is ok.
     pin 1 - Output indicating CPU usage, monitor with an oscilloscope,
             logic analyzer or even an LED (brighter = CPU busier)
-    pin 17: A3, use a mic input
+    pin 17: A#, use for pot
+    pin 18: A4, use a mic input
+    pin 19: use for button
 */
 
+#include <ADC.h>
 #include <Audio.h>
 #include <OctoWS2811.h>
+
+#define MIC_PIN		18
+#define POT_PIN		17
+#define BUTTON_PIN 	19
 
 #define TRUE   1
 #define FALSE  0
@@ -36,8 +43,9 @@ int drawingMemory[ledsPerStrip*6];
 const int config = WS2811_GRB | WS2811_800kHz;
 
 // Initialize all needed objects
+ADC *adc = new ADC();
 OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
-AudioInputAnalog         adc1(A3);
+AudioInputAnalog         adc1(MIC_PIN);
 AudioAnalyzeFFT1024      fft1024;
 AudioConnection          patchCord1(adc1, fft1024);
 
@@ -48,6 +56,7 @@ int shown[matrix_width];			// This array holds the on-screen levels
 int peakIndLevel[matrix_width];		// This array determines how high the peak indicator bar is
 
 // These parameters adjust the vertical thresholds
+// TODO: change analog reference from 1.2v to 3.3v
 const float maxLevel = 0.2;      // 1.0 = max, lower is more "sensitive"
 const float dynamicRange = 45.0; // total range to display, in decibels
 const float linearBlend = 0.3;   // useful range is 0 to 0.7
@@ -161,6 +170,15 @@ int rainbowColor(int index)
 
 void setup()
 {
+  pinMode(POT_PIN, INPUT);			// configure pot pin
+  pinMode(BUTTON_PIN, INPUT_PULLUP);	// configure button pin
+  adc->setAveraging(4, ADC_1);
+  adc->setResolution(8, ADC_1);
+  adc->setConversionSpeed(ADC_VERY_LOW_SPEED,ADC_1);
+  adc->setSamplingSpeed(ADC_VERY_LOW_SPEED,ADC_1);
+  adc->setReference(ADC_REF_3V3, ADC_1);
+  Serial.begin(38400);
+
   AudioMemory(12);		// Audio requires memory to work.
   computeVerticalLevels();	// compute the vertical thresholds before starting
   leds.begin();
@@ -175,8 +193,24 @@ void setup()
   displayUpdateTimer = 0;
 }
 
+int val;
+
 void loop()
 {
+
+	val = adc->analogRead(POT_PIN, ADC_1);
+	if (!digitalRead(BUTTON_PIN))
+	{
+		Serial.print("Button:  ON\t\tPot: ");
+		Serial.println(val);
+	}
+	else
+	{
+		Serial.print("Button: OFF\t\tPot: ");
+		Serial.println(val);
+	}
+	delay(200);
+/*
   int currentFreqBin, prevShown, ledHeight;
   prevShown = 0;
   if (fft1024.available())
@@ -278,4 +312,5 @@ void loop()
     	displayUpdateTimer = 0;
     }
   }
+  */
 }
