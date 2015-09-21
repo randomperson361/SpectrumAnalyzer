@@ -65,7 +65,7 @@ const float linearBlend = 0.3;   // useful range is 0 to 0.7
 float thresholdVertical[matrix_height];
 
 // These parameters are used to calculate how fast the bars fall after they have risen and peak indicator settings
-const int colorMode = 0;			// sets which mode to use to determine coloration of the bars
+int colorMode = 0;			// sets which mode to use to determine coloration of the bars
 const bool usePeakIndicator = TRUE;	// determines wether or not a peak indicator bar will be used
 const int topBarFallDelay = 0;		// number of milliseconds it takes for the top bar to fall back down a level
 const int topBarRiseDelay = 0;		// number of milliseconds it takes for the top bar to rise up a level
@@ -197,8 +197,15 @@ int val;
 
 void loop()
 {
+	if(!digitalRead(BUTTON_PIN))
+	{
+		colorMode++;
+		colorMode %= 2;
+		delay(100);
+	}
 
 	val = adc->analogRead(POT_PIN, ADC_1);
+	/*
 	if (!digitalRead(BUTTON_PIN))
 	{
 		Serial.print("Button:  ON\t\tPot: ");
@@ -210,7 +217,7 @@ void loop()
 		Serial.println(val);
 	}
 	delay(200);
-/*
+*/
   int currentFreqBin, prevShown, ledHeight;
   prevShown = 0;
   if (fft1024.available())
@@ -312,5 +319,5 @@ void loop()
     	displayUpdateTimer = 0;
     }
   }
-  */
+
 }
