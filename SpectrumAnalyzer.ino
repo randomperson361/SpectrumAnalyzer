@@ -202,7 +202,7 @@ void loop()
   if(!digitalRead(BUTTON_PIN))
   {
   	colorMode++;
-  	colorMode %= 2;
+  	colorMode %= 13;
   	delay(200);
   }
   potVal = adc->analogRead(POT_PIN, ADC_1);
@@ -297,6 +297,17 @@ void loop()
 					{
 					case 0: leds.setPixel((bar*16)+led, rainbowColor(shown[bar])); break;
 					case 1: leds.setPixel((bar*16)+led, rainbowColor(ledHeight)); break;
+					case 2: leds.setPixel((bar*16)+led, makeColor(bar*20, 100, potVal)); break;
+					case 3: leds.setPixel((bar*16)+led, makeColor(((bar*20)+(millis()/2))%360, 100, potVal)); break;
+					case 4: leds.setPixel((bar*16)+led, makeColor(((bar*20)+(millis()/10))%360, 100, potVal)); break;
+					case 5: leds.setPixel((bar*16)+led, makeColor(((bar*20)+(millis()/50))%360, 100, potVal)); break;
+					case 6: leds.setPixel((bar*16)+led, makeColor(0, 0, potVal)); break;
+					case 7: leds.setPixel((bar*16)+led, makeColor(0, 100, potVal)); break;
+					case 8: leds.setPixel((bar*16)+led, makeColor(60, 100, potVal)); break;
+					case 9: leds.setPixel((bar*16)+led, makeColor(120, 100, potVal)); break;
+					case 10:leds.setPixel((bar*16)+led, makeColor(180, 100, potVal)); break;
+					case 11:leds.setPixel((bar*16)+led, makeColor(240, 100, potVal)); break;
+					case 12:leds.setPixel((bar*16)+led, makeColor(300, 100, potVal)); break;
 					}
 				}
 				else if (peakIndLevel[bar] == ledHeight)
