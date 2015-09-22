@@ -207,10 +207,11 @@ void loop()
   }
   potVal = adc->analogRead(POT_PIN, ADC_1);
   potVal = (potVal*75)/255;
-  int currentFreqBin, ledHeight;
+  int currentFreqBin, ledHeight, maxShown;
   if (fft1024.available())
   {
 		currentFreqBin = 2;				// skip the first two bins since they are always high
+		maxShown = 0;					// this variable holds the highest bar level
 
 		// read fft and calculate number of levels to light for each bar
 		for (int i=0; i<matrix_width; i++)
@@ -226,11 +227,21 @@ void loop()
 					break;
 				}
 			}
+			if (shown[i] > maxShown)
+			{
+				maxShown = shown[i];
+			}
 			currentFreqBin += frequencyBinsHorizontal[i];
 		}
 
 		for (int bar=0; bar<18; bar++)			// set pixels
 		{
+			// drop all bars to bottom if sound below minimum threshold
+			if (maxShown < 5)
+			{
+				shown[bar] = 0;
+			}
+
 			// delay top bar falling to make animation look more natural
 			if (shown[bar] >= prevShown[bar])
 			{
