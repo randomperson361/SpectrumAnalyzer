@@ -79,8 +79,8 @@ elapsedMillis peakBarTimer[matrix_width];			// auto incrementing variable to det
 elapsedMillis displayUpdateTimer;					// auto incrementing variable to determine time last display update
 
 // This array specifies how many of the FFT frequency bin to use for each horizontal pixel.  Because humans hear in octaves and FFT bins are linear, the low frequencies use a small number of bins, higher frequencies use more.
-int frequencyBinsHorizontal[matrix_width] = {1, 1, 2, 2, 3, 3, 4, 5, 7, 8, 10, 13, 17, 21, 27, 34, 43, 54};		// only goes up to half the bins, so to ~12500Hz, the higher freq bins picked up a lot of noise
-float micCorrectionFactor[matrix_width] = {1.12, 1.15, 1.15, 1.12, 1.06, 1.03, 1, 1, 1, 1, 1, 1, 0.891, 0.794, 0.708, 1, 1.1, 1.2};	//correction factors added due to imperfections in the mic and amplifier
+int frequencyBinsHorizontal[matrix_width] = {1, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24, 29};		// only goes up to ~160 the bins, so to ~7000Hz, the higher freq bins picked up a lot of noise and arent used often in music
+float micCorrectionFactor[matrix_width] = {1, 1.03, 1.09, 1.06, 1.03, 1, 1, 1, 1, 1, 1, 1, 1, 0.94, 0.89, 0.84, 0.89, 0.94};	//correction factors added due to imperfections in the mic and amplifier
 
 // Run once from setup, the compute the vertical levels
 void computeVerticalLevels()
