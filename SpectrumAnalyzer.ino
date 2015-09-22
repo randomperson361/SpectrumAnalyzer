@@ -80,7 +80,7 @@ elapsedMillis displayUpdateTimer;					// auto incrementing variable to determine
 
 // This array specifies how many of the FFT frequency bin to use for each horizontal pixel.  Because humans hear in octaves and FFT bins are linear, the low frequencies use a small number of bins, higher frequencies use more.
 int frequencyBinsHorizontal[matrix_width] = {1, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24, 29};		// only goes up to ~160 the bins, so to ~7000Hz, the higher freq bins picked up a lot of noise and arent used often in music
-float micCorrectionFactor[matrix_width] = {1, 1.03, 1.09, 1.06, 1.03, 1, 1, 1, 1, 1, 1, 1, 1, 0.94, 0.89, 0.84, 0.89, 0.94};	//correction factors added due to imperfections in the mic and amplifier
+float micCorrectionFactor[matrix_width] = {1, 1.03, 1.09, 1.09, 1.06, 1.03, 1, 1, 1, 1, 1, 1, 1, 0.94, 0.89, 0.84, 0.89, 0.94};	//correction factors added due to imperfections in the mic and amplifier
 
 // Run once from setup, the compute the vertical levels
 void computeVerticalLevels()
@@ -247,100 +247,63 @@ void loop()
 				shown[i] = prevShown + 1;
 				topBarRiseTimer[i] = 0;
 			}
-
-
-			// calculate where the peak indicator should be if it is being used
-			if (usePeakIndicator)
-			{
-				if (shown[i] >= peakIndLevel[i])
-				{
-					peakIndLevel[i] = shown[i]+1;
-					peakBarTimer[i] = 0;
-				}
-				else if ((peakIndLevel[i] > (shown[i]+1)) && (peakIndLevel[i]>1) && (peakBarTimer[i] >= peakBarFallDelay))
-				{
-					peakIndLevel[i]--;
-					peakBarTimer[i] = 0;
-				}
-			}
 			currentFreqBin += frequencyBinsHorizontal[i];
 		}
-/*
-		// Clear terminal
-		Serial.write(27);       // ESC command
-		Serial.print("[2J");    // clear screen command
-		Serial.write(27);
-		Serial.print("[H");     // cursor to home command
 
-		// print plot to terminal
-		for (int row = 0; row<=matrix_height; row++)
+		for (int bar=0; bar<18; bar++)			// set pixels
 		{
-			for (int column = 0; column<matrix_width; column++)
-			{
-				if (row==16)
+
+				// calculate where the peak indicator should be if it is being used
+				if (usePeakIndicator)
 				{
-					char buffer[5];
-					sprintf(buffer,"%2d ", shown[column]);
-					Serial.print(buffer);
-				}
-				else
-				{
-					if (shown[column]>=(16-row))
+					if (shown[bar] >= peakIndLevel[bar])
 					{
-						Serial.print("-- ");
+						peakIndLevel[bar] = shown[bar]+1;
+						peakBarTimer[bar] = 0;
+					}
+					else if ((peakIndLevel[bar] > (shown[bar]+1)) && (peakIndLevel[bar]>1) && (peakBarTimer[bar] >= peakBarFallDelay))
+					{
+						peakIndLevel[bar]--;
+						peakBarTimer[bar] = 0;
+					}
+				}
+
+				for (int led=0; led<16; led++)
+				{
+					// height of led on panel from 1 to 16, 0 is for not shown
+					if((bar-1)%3 == 0)		// correct for upside down wired bars
+					{
+						ledHeight = 16-led;
 					}
 					else
 					{
-						Serial.print("   ");
+						ledHeight = led+1;
 					}
-				}
-			}
-			Serial.println();
-		}
-		Serial.println("** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **");
 
-		// delay to slow refresh rate
-		delay(50);
-
-*/
-    for (int bar=0; bar<18; bar++)			// set pixels
-    {
-    		for (int led=0; led<16; led++)
-    		{
-    			// height of led on panel from 1 to 16, 0 is for not shown
-    			if((bar-1)%3 == 0)		// correct for upside down wired bars
-    			{
-    				ledHeight = 16-led;
-    			}
-    			else
-    			{
-    				ledHeight = led+1;
-    			}
-
-				if (shown[bar]>=ledHeight)
-				{
-					switch (colorMode)
+					if (shown[bar]>=ledHeight)
 					{
-					case 0: leds.setPixel((bar*16)+led, rainbowColor(shown[bar])); break;
-					case 1: leds.setPixel((bar*16)+led, rainbowColor(ledHeight)); break;
+						switch (colorMode)
+						{
+						case 0: leds.setPixel((bar*16)+led, rainbowColor(shown[bar])); break;
+						case 1: leds.setPixel((bar*16)+led, rainbowColor(ledHeight)); break;
+						}
 					}
-				}
-				else if (peakIndLevel[bar] == ledHeight)
-				{
-					leds.setPixel((bar*16)+led, makeColor(0,0,potVal));
-				}
-				else
-				{
-					leds.setPixel((bar*16)+led, BLACK);
-				}
+					else if (peakIndLevel[bar] == ledHeight)
+					{
+						leds.setPixel((bar*16)+led, makeColor(0,0,potVal));
+					}
+					else
+					{
+						leds.setPixel((bar*16)+led, BLACK);
+					}
 
-    		}
-    }
-    if (displayUpdateTimer >= displayUpdateDelay)
-    {
-    	leds.show();
-    	displayUpdateTimer = 0;
-    }
+				}
+		}
+		if (displayUpdateTimer >= displayUpdateDelay)
+		{
+			leds.show();
+			displayUpdateTimer = 0;
+		}
 
   }
 
