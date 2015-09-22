@@ -56,9 +56,9 @@ int shown[matrix_width];			// This array holds the on-screen levels
 int peakIndLevel[matrix_width];		// This array determines how high the peak indicator bar is
 
 // These parameters adjust the vertical thresholds
-const float maxLevel = 0.2;      // 1.0 = max, lower is more "sensitive"
-const float dynamicRange = 45.0; // total range to display, in decibels
-const float linearBlend = 0.3;   // useful range is 0 to 0.7
+const float maxLevel = 0.1;      // 1.0 = max, lower is more "sensitive"
+const float dynamicRange = 50.0; // total range to display, in decibels
+const float linearBlend = 0.4;   // useful range is 0 to 0.7
 
 // This array holds the volume level (0 to 1.0) for each vertical pixel to turn on.  Computed in setup() using the 3 parameters above.
 float thresholdVertical[matrix_height];
@@ -80,7 +80,7 @@ elapsedMillis displayUpdateTimer;					// auto incrementing variable to determine
 
 // This array specifies how many of the FFT frequency bin to use for each horizontal pixel.  Because humans hear in octaves and FFT bins are linear, the low frequencies use a small number of bins, higher frequencies use more.
 int frequencyBinsHorizontal[matrix_width] = {1, 1, 2, 2, 3, 3, 4, 5, 7, 8, 10, 13, 17, 21, 27, 34, 43, 54};		// only goes up to half the bins, so to ~12500Hz, the higher freq bins picked up a lot of noise
-float micCorrectionFactor[matrix_width] = {1.58, 1.41, 1.26, 1.12, 1.06, 1.03, 1, 1, 1, 1, 1, 1, 0.891, 0.794, 0.708, 1, 1.15, 1.3};	//correction factors added due to imperfections in the mic and amplifier
+float micCorrectionFactor[matrix_width] = {1.12, 1.15, 1.15, 1.12, 1.06, 1.03, 1, 1, 1, 1, 1, 1, 0.891, 0.794, 0.708, 1, 1.1, 1.2};	//correction factors added due to imperfections in the mic and amplifier
 
 // Run once from setup, the compute the vertical levels
 void computeVerticalLevels()
@@ -201,7 +201,7 @@ void loop()
   {
   	colorMode++;
   	colorMode %= 2;
-  	delay(100);
+  	delay(200);
   }
   potVal = adc->analogRead(POT_PIN, ADC_1);
   potVal = (potVal*75)/255;
@@ -265,8 +265,44 @@ void loop()
 			}
 			currentFreqBin += frequencyBinsHorizontal[i];
 		}
+/*
+		// Clear terminal
+		Serial.write(27);       // ESC command
+		Serial.print("[2J");    // clear screen command
+		Serial.write(27);
+		Serial.print("[H");     // cursor to home command
 
+		// print plot to terminal
+		for (int row = 0; row<=matrix_height; row++)
+		{
+			for (int column = 0; column<matrix_width; column++)
+			{
+				if (row==16)
+				{
+					char buffer[5];
+					sprintf(buffer,"%2d ", shown[column]);
+					Serial.print(buffer);
+				}
+				else
+				{
+					if (shown[column]>=(16-row))
+					{
+						Serial.print("-- ");
+					}
+					else
+					{
+						Serial.print("   ");
+					}
+				}
+			}
+			Serial.println();
+		}
+		Serial.println("** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **");
 
+		// delay to slow refresh rate
+		delay(50);
+
+*/
     for (int bar=0; bar<18; bar++)			// set pixels
     {
     		for (int led=0; led<16; led++)
@@ -305,6 +341,7 @@ void loop()
     	leds.show();
     	displayUpdateTimer = 0;
     }
+
   }
 
 }
