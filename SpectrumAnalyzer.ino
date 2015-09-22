@@ -53,6 +53,7 @@ AudioConnection          patchCord1(adc1, fft1024);
 float level[matrix_width];			// An array to holds the raw magnitude of the 16 frequency bands
 // The following two arrays have a value range of 0 to 16, indicating the number of bars shown
 int shown[matrix_width];			// This array holds the on-screen levels
+int prevShown[matrix_width];		// This array holds the previous on-screen levels
 int peakIndLevel[matrix_width];		// This array determines how high the peak indicator bar is
 
 // These parameters adjust the vertical thresholds
@@ -187,6 +188,7 @@ void setup()
   leds.show();
   for (int i=0; i<matrix_width; i++)
   {
+	  prevShown[i] = 0;
 	  topBarRiseTimer[i] = 0;
 	  topBarFallTimer[i] = 0;
 	  peakBarTimer[i] = 0;
@@ -205,8 +207,7 @@ void loop()
   }
   potVal = adc->analogRead(POT_PIN, ADC_1);
   potVal = (potVal*75)/255;
-  int currentFreqBin, prevShown, ledHeight;
-  prevShown = 0;
+  int currentFreqBin, ledHeight;
   if (fft1024.available())
   {
 		currentFreqBin = 2;				// skip the first two bins since they are always high
@@ -215,7 +216,7 @@ void loop()
 		for (int i=0; i<matrix_width; i++)
 		{
 			level[i] = micCorrectionFactor[i] * fft1024.read(currentFreqBin, currentFreqBin + frequencyBinsHorizontal[i] - 1);
-			prevShown = shown[i];
+			prevShown[i] = shown[i];
 			shown[i] = 0;
 			for (int j=0; j<matrix_height; j++)
 			{
@@ -225,79 +226,78 @@ void loop()
 					break;
 				}
 			}
-
-			// delay top bar falling to make animation look more natural
-			if (shown[i] >= prevShown)
-			{
-				topBarFallTimer[i] = 0;
-			}
-			else if ((shown[i]>0) && (topBarFallTimer[i] >= topBarFallDelay))
-			{
-				shown[i] = prevShown - 1;
-				topBarFallTimer[i] = 0;
-			}
-
-			// delay top barr rising to make animation look more natural
-			if (shown[i] <= prevShown)
-			{
-				topBarRiseTimer[i] = 0;
-			}
-			else if ((shown[i]>0) && (topBarRiseTimer[i] >= topBarRiseDelay))
-			{
-				shown[i] = prevShown + 1;
-				topBarRiseTimer[i] = 0;
-			}
 			currentFreqBin += frequencyBinsHorizontal[i];
 		}
 
 		for (int bar=0; bar<18; bar++)			// set pixels
 		{
+			// delay top bar falling to make animation look more natural
+			if (shown[bar] >= prevShown[bar])
+			{
+				topBarFallTimer[bar] = 0;
+			}
+			else if ((shown[bar]>0) && (topBarFallTimer[bar] >= topBarFallDelay))
+			{
+				shown[bar] = prevShown[bar] - 1;
+				topBarFallTimer[bar] = 0;
+			}
 
-				// calculate where the peak indicator should be if it is being used
-				if (usePeakIndicator)
+			// delay top barr rising to make animation look more natural
+			if (shown[bar] <= prevShown[bar])
+			{
+				topBarRiseTimer[bar] = 0;
+			}
+			else if ((shown[bar]>0) && (topBarRiseTimer[bar] >= topBarRiseDelay))
+			{
+				shown[bar] = prevShown[bar] + 1;
+				topBarRiseTimer[bar] = 0;
+			}
+
+			// calculate where the peak indicator should be if it is being used
+			if (usePeakIndicator)
+			{
+				if (shown[bar] >= peakIndLevel[bar])
 				{
-					if (shown[bar] >= peakIndLevel[bar])
-					{
-						peakIndLevel[bar] = shown[bar]+1;
-						peakBarTimer[bar] = 0;
-					}
-					else if ((peakIndLevel[bar] > (shown[bar]+1)) && (peakIndLevel[bar]>1) && (peakBarTimer[bar] >= peakBarFallDelay))
-					{
-						peakIndLevel[bar]--;
-						peakBarTimer[bar] = 0;
-					}
+					peakIndLevel[bar] = shown[bar]+1;
+					peakBarTimer[bar] = 0;
+				}
+				else if ((peakIndLevel[bar] > (shown[bar]+1)) && (peakIndLevel[bar]>1) && (peakBarTimer[bar] >= peakBarFallDelay))
+				{
+					peakIndLevel[bar]--;
+					peakBarTimer[bar] = 0;
+				}
+			}
+
+			for (int led=0; led<16; led++)
+			{
+				// height of led on panel from 1 to 16, 0 is for not shown
+				if((bar-1)%3 == 0)		// correct for upside down wired bars
+				{
+					ledHeight = 16-led;
+				}
+				else
+				{
+					ledHeight = led+1;
 				}
 
-				for (int led=0; led<16; led++)
+				if (shown[bar]>=ledHeight)
 				{
-					// height of led on panel from 1 to 16, 0 is for not shown
-					if((bar-1)%3 == 0)		// correct for upside down wired bars
+					switch (colorMode)
 					{
-						ledHeight = 16-led;
+					case 0: leds.setPixel((bar*16)+led, rainbowColor(shown[bar])); break;
+					case 1: leds.setPixel((bar*16)+led, rainbowColor(ledHeight)); break;
 					}
-					else
-					{
-						ledHeight = led+1;
-					}
-
-					if (shown[bar]>=ledHeight)
-					{
-						switch (colorMode)
-						{
-						case 0: leds.setPixel((bar*16)+led, rainbowColor(shown[bar])); break;
-						case 1: leds.setPixel((bar*16)+led, rainbowColor(ledHeight)); break;
-						}
-					}
-					else if (peakIndLevel[bar] == ledHeight)
-					{
-						leds.setPixel((bar*16)+led, makeColor(0,0,potVal));
-					}
-					else
-					{
-						leds.setPixel((bar*16)+led, BLACK);
-					}
-
 				}
+				else if (peakIndLevel[bar] == ledHeight)
+				{
+					leds.setPixel((bar*16)+led, makeColor(0,0,potVal));
+				}
+				else
+				{
+					leds.setPixel((bar*16)+led, BLACK);
+				}
+
+			}
 		}
 		if (displayUpdateTimer >= displayUpdateDelay)
 		{
