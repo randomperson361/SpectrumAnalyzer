@@ -70,7 +70,7 @@ int potVal;				// stores the reading from the pot
 
 // These parameters are used to calculate how fast the bars fall after they have risen and peak indicator settings
 const bool usePeakIndicator = TRUE;	// determines wether or not a peak indicator bar will be used
-const int topBarFallDelay = 0;		// number of milliseconds it takes for the top bar to fall back down a level
+const int topBarFallDelay = 25;		// number of milliseconds it takes for the top bar to fall back down a level
 const int topBarRiseDelay = 0;		// number of milliseconds it takes for the top bar to rise up a level
 const int peakBarFallDelay = 100;	// number of milliseconds it takes for the peak bar to fall back down a level
 const int displayUpdateDelay = 0;	// number of milliseconds it takes for the display to refresh
@@ -237,10 +237,12 @@ void loop()
 		for (int bar=0; bar<18; bar++)			// set pixels
 		{
 			// drop all bars to bottom if sound below minimum threshold
-			if (maxShown < 5)
+			/*
+			if (maxShown < 8)
 			{
 				shown[bar] = 0;
 			}
+			*/
 
 			// delay top bar falling to make animation look more natural
 			if (shown[bar] >= prevShown[bar])
