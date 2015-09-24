@@ -55,6 +55,7 @@ float level[matrix_width];			// An array to holds the raw magnitude of the 16 fr
 int shown[matrix_width];			// This array holds the on-screen levels
 int prevShown[matrix_width];		// This array holds the previous on-screen levels
 int peakIndLevel[matrix_width];		// This array determines how high the peak indicator bar is
+bool isFalling[matrix_width];		// This array tells whether or not a bar is falling
 
 // These parameters adjust the vertical thresholds
 const float maxLevel = 0.1;      // 1.0 = max, lower is more "sensitive"
@@ -70,7 +71,8 @@ int potVal;				// stores the reading from the pot
 
 // These parameters are used to calculate how fast the bars fall after they have risen and peak indicator settings
 const bool usePeakIndicator = TRUE;	// determines wether or not a peak indicator bar will be used
-const int topBarFallDelay = 25;		// number of milliseconds it takes for the top bar to fall back down a level
+const int dimNum = 0;				// nummber of bars to dim while bar is falling
+const int topBarFallDelay = 10;		// number of milliseconds it takes for the top bar to fall back down a level
 const int topBarRiseDelay = 0;		// number of milliseconds it takes for the top bar to rise up a level
 const int peakBarFallDelay = 100;	// number of milliseconds it takes for the peak bar to fall back down a level
 const int displayUpdateDelay = 0;	// number of milliseconds it takes for the display to refresh
@@ -145,28 +147,28 @@ int makeColor(unsigned int hue, unsigned int saturation, unsigned int lightness)
 }
 
 // selects a color from the predefined rainbow with yellow centered
-int rainbowColor(int index)
+int rainbowColor(int index, int brightness)
 {
 	int color;
 	switch (index)
 	{
-		case 1: color=makeColor(272, 100, potVal); break;
-		case 2: color=makeColor(248, 100, potVal); break;
-		case 3: color=makeColor(225, 100, potVal); break;
-		case 4: color=makeColor(202, 100, potVal); break;
-		case 5: color=makeColor(178, 100, potVal); break;
-		case 6: color=makeColor(154, 100, potVal); break;
-		case 7: color=makeColor(131, 100, potVal); break;
-		case 8: color=makeColor(107, 100, potVal); break;
-		case 9: color=makeColor(84, 100, potVal); break;
-		case 10: color=makeColor(60, 100, potVal); break;
-		case 11: color=makeColor(45, 100, potVal); break;
-		case 12: color=makeColor(30, 100, potVal); break;
-		case 13: color=makeColor(15, 100, potVal); break;
-		case 14: color=makeColor(0, 100, potVal); break;
-		case 15: color=makeColor(0, 100, potVal); break;
-		case 16: color=makeColor(0, 0, potVal); break;
-		default: color=makeColor(0, 0, potVal); break;
+		case 1: color=makeColor(272, 100, brightness); break;
+		case 2: color=makeColor(248, 100, brightness); break;
+		case 3: color=makeColor(225, 100, brightness); break;
+		case 4: color=makeColor(202, 100, brightness); break;
+		case 5: color=makeColor(178, 100, brightness); break;
+		case 6: color=makeColor(154, 100, brightness); break;
+		case 7: color=makeColor(131, 100, brightness); break;
+		case 8: color=makeColor(107, 100, brightness); break;
+		case 9: color=makeColor(84, 100, brightness); break;
+		case 10: color=makeColor(60, 100, brightness); break;
+		case 11: color=makeColor(45, 100, brightness); break;
+		case 12: color=makeColor(30, 100, brightness); break;
+		case 13: color=makeColor(15, 100, brightness); break;
+		case 14: color=makeColor(0, 100, brightness); break;
+		case 15: color=makeColor(0, 100, brightness); break;
+		case 16: color=makeColor(0, 0, brightness); break;
+		default: color=makeColor(0, 0, brightness); break;
 	}
 	return color;
 }
@@ -207,7 +209,8 @@ void loop()
   }
   potVal = adc->analogRead(POT_PIN, ADC_1);
   potVal = (potVal*75)/255;
-  int currentFreqBin, ledHeight, maxShown;
+  int currentFreqBin, ledHeight, maxShown, brightness;
+  float dimFactor;
   if (fft1024.available())
   {
 		currentFreqBin = 2;				// skip the first two bins since they are always high
@@ -247,12 +250,19 @@ void loop()
 			// delay top bar falling to make animation look more natural
 			if (shown[bar] >= prevShown[bar])
 			{
+				isFalling[bar] = FALSE;
 				topBarFallTimer[bar] = 0;
 			}
 			else if ((shown[bar]>0) && (topBarFallTimer[bar] >= topBarFallDelay))
 			{
+				isFalling[bar] = TRUE;
 				shown[bar] = prevShown[bar] - 1;
 				topBarFallTimer[bar] = 0;
+			}
+			else
+			{
+				isFalling[bar] = TRUE;
+				shown[bar] = prevShown[bar];
 			}
 
 			// delay top barr rising to make animation look more natural
@@ -264,6 +274,10 @@ void loop()
 			{
 				shown[bar] = prevShown[bar] + 1;
 				topBarRiseTimer[bar] = 0;
+			}
+			else
+			{
+				shown[bar] = prevShown[bar];
 			}
 
 			// calculate where the peak indicator should be if it is being used
@@ -295,21 +309,32 @@ void loop()
 
 				if (shown[bar]>=ledHeight)
 				{
+					if (isFalling[bar] && (ledHeight > ((shown[bar]+1)- dimNum)))
+					{
+						dimFactor = ((shown[bar]+1.-ledHeight)) / (dimNum+1.);
+					}
+					else
+					{
+						dimFactor = 1.0;
+					}
+
+					brightness = int(potVal*dimFactor);
+
 					switch (colorMode)
 					{
-					case 0: leds.setPixel((bar*16)+led, rainbowColor(shown[bar])); break;
-					case 1: leds.setPixel((bar*16)+led, rainbowColor(ledHeight)); break;
-					case 2: leds.setPixel((bar*16)+led, makeColor(bar*20, 100, potVal)); break;
-					case 3: leds.setPixel((bar*16)+led, makeColor(((bar*20)+(millis()/2))%360, 100, potVal)); break;
-					case 4: leds.setPixel((bar*16)+led, makeColor(((bar*20)+(millis()/10))%360, 100, potVal)); break;
-					case 5: leds.setPixel((bar*16)+led, makeColor(((bar*20)+(millis()/50))%360, 100, potVal)); break;
-					case 6: leds.setPixel((bar*16)+led, makeColor(0, 0, potVal)); break;
-					case 7: leds.setPixel((bar*16)+led, makeColor(0, 100, potVal)); break;
-					case 8: leds.setPixel((bar*16)+led, makeColor(60, 100, potVal)); break;
-					case 9: leds.setPixel((bar*16)+led, makeColor(120, 100, potVal)); break;
-					case 10:leds.setPixel((bar*16)+led, makeColor(180, 100, potVal)); break;
-					case 11:leds.setPixel((bar*16)+led, makeColor(240, 100, potVal)); break;
-					case 12:leds.setPixel((bar*16)+led, makeColor(300, 100, potVal)); break;
+					case 0: leds.setPixel((bar*16)+led, rainbowColor(shown[bar],brightness)); break;
+					case 1: leds.setPixel((bar*16)+led, rainbowColor(ledHeight,brightness)); break;
+					case 2: leds.setPixel((bar*16)+led, makeColor(bar*20, 100, brightness)); break;
+					case 3: leds.setPixel((bar*16)+led, makeColor(((bar*20)+(millis()/2))%360, 100, brightness)); break;
+					case 4: leds.setPixel((bar*16)+led, makeColor(((bar*20)+(millis()/10))%360, 100, brightness)); break;
+					case 5: leds.setPixel((bar*16)+led, makeColor(((bar*20)+(millis()/50))%360, 100, brightness)); break;
+					case 6: leds.setPixel((bar*16)+led, makeColor(0, 0, brightness)); break;
+					case 7: leds.setPixel((bar*16)+led, makeColor(0, 100, brightness)); break;
+					case 8: leds.setPixel((bar*16)+led, makeColor(60, 100, brightness)); break;
+					case 9: leds.setPixel((bar*16)+led, makeColor(120, 100, brightness)); break;
+					case 10:leds.setPixel((bar*16)+led, makeColor(180, 100, brightness)); break;
+					case 11:leds.setPixel((bar*16)+led, makeColor(240, 100, brightness)); break;
+					case 12:leds.setPixel((bar*16)+led, makeColor(300, 100, brightness)); break;
 					}
 				}
 				else if (peakIndLevel[bar] == ledHeight)

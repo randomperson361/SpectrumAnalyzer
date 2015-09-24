@@ -1,7 +1,7 @@
 //This is a automatic generated file
 //Please do not modify this file
 //If you touch this file your change will be overwritten during the next build
-//This file has been generated on 2015-09-22 17:30:26
+//This file has been generated on 2015-09-23 21:19:14
 
 #include "Arduino.h"
 #include <ADC.h>
@@ -10,7 +10,7 @@
 void computeVerticalLevels() ;
 unsigned int h2rgb(unsigned int v1, unsigned int v2, unsigned int hue) ;
 int makeColor(unsigned int hue, unsigned int saturation, unsigned int lightness) ;
-int rainbowColor(int index) ;
+int rainbowColor(int index, int brightness) ;
 void setup() ;
 void loop() ;
 
