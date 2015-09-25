@@ -58,7 +58,7 @@ int peakIndLevel[matrix_width];		// This array determines how high the peak indi
 bool isFalling[matrix_width];		// This array tells whether or not a bar is falling
 
 // These parameters adjust the vertical thresholds
-const float maxLevel = 0.1;      // 1.0 = max, lower is more "sensitive"
+const float maxLevel = 0.12;      // 1.0 = max, lower is more "sensitive"
 const float dynamicRange = 30.0; // total range to display, in decibels
 const float linearBlend = 0.0;   // useful range is 0 to 0.7
 
@@ -83,7 +83,7 @@ elapsedMillis displayUpdateTimer;					// auto incrementing variable to determine
 
 // This array specifies how many of the FFT frequency bin to use for each horizontal pixel.  Because humans hear in octaves and FFT bins are linear, the low frequencies use a small number of bins, higher frequencies use more.
 int frequencyBinsHorizontal[matrix_width] = {1, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24, 29};		// only goes up to ~160 the bins, so to ~7000Hz, the higher freq bins picked up a lot of noise and arent used often in music
-float micCorrectionFactor[matrix_width] = {1, 1.03, 1.09, 1.09, 1.06, 1.03, 1, 1, 1, 1, 1, 1, 1, 0.94, 0.89, 0.84, 0.89, 0.94};	//correction factors added due to imperfections in the mic and amplifier
+float micCorrectionFactor[matrix_width] = {1, 1.03, 1.09, 1.09, 1.06, 1.13, 1.1, 1.1, 1.1, 1.1, 1.1, 1.1, 1, 0.94, 0.89, 0.84, 0.89, 0.94};	//correction factors added due to imperfections in the mic and amplifier
 
 // Run once from setup, the compute the vertical levels
 void computeVerticalLevels()
@@ -242,7 +242,7 @@ void loop()
 		for (int bar=0; bar<18; bar++)			// set pixels
 		{
 			// drop all bars to bottom if sound below minimum threshold
-			if ((totalShown < 50)/* && maxShown <7*/)
+			if ((totalShown < 42) && maxShown <8)
 			{
 				shown[bar] = 0;
 			}
