@@ -59,8 +59,8 @@ bool isFalling[matrix_width];		// This array tells whether or not a bar is falli
 
 // These parameters adjust the vertical thresholds
 const float maxLevel = 0.1;      // 1.0 = max, lower is more "sensitive"
-const float dynamicRange = 50.0; // total range to display, in decibels
-const float linearBlend = 0.4;   // useful range is 0 to 0.7
+const float dynamicRange = 30.0; // total range to display, in decibels
+const float linearBlend = 0.0;   // useful range is 0 to 0.7
 
 // This array holds the volume level (0 to 1.0) for each vertical pixel to turn on.  Computed in setup() using the 3 parameters above.
 float thresholdVertical[matrix_height];
@@ -209,12 +209,13 @@ void loop()
   }
   potVal = adc->analogRead(POT_PIN, ADC_1);
   potVal = (potVal*75)/255;
-  int currentFreqBin, ledHeight, maxShown, brightness;
+  int currentFreqBin, ledHeight, maxShown, totalShown, brightness;
   float dimFactor;
   if (fft1024.available())
   {
 		currentFreqBin = 2;				// skip the first two bins since they are always high
 		maxShown = 0;					// this variable holds the highest bar level
+		totalShown = 0;					// this variable holds the total number of leds shown
 
 		// read fft and calculate number of levels to light for each bar
 		for (int i=0; i<matrix_width; i++)
@@ -234,18 +235,18 @@ void loop()
 			{
 				maxShown = shown[i];
 			}
+			totalShown += shown[i];
 			currentFreqBin += frequencyBinsHorizontal[i];
 		}
 
 		for (int bar=0; bar<18; bar++)			// set pixels
 		{
 			// drop all bars to bottom if sound below minimum threshold
-			/*
-			if (maxShown < 8)
+			if ((totalShown < 50)/* && maxShown <7*/)
 			{
 				shown[bar] = 0;
 			}
-			*/
+
 
 			// delay top bar falling to make animation look more natural
 			if (shown[bar] >= prevShown[bar])
@@ -253,7 +254,7 @@ void loop()
 				isFalling[bar] = FALSE;
 				topBarFallTimer[bar] = 0;
 			}
-			else if ((shown[bar]>0) && (topBarFallTimer[bar] >= topBarFallDelay))
+			else if ((prevShown[bar]>0) && (topBarFallTimer[bar] >= topBarFallDelay))
 			{
 				isFalling[bar] = TRUE;
 				shown[bar] = prevShown[bar] - 1;
@@ -270,7 +271,7 @@ void loop()
 			{
 				topBarRiseTimer[bar] = 0;
 			}
-			else if ((shown[bar]>0) && (topBarRiseTimer[bar] >= topBarRiseDelay))
+			else if (topBarRiseTimer[bar] >= topBarRiseDelay)
 			{
 				shown[bar] = prevShown[bar] + 1;
 				topBarRiseTimer[bar] = 0;
